@@ -1,6 +1,6 @@
 /* select style */
 .custom-select-wrapper {
-  margin: 10px 0px;
+  --margin: 10px 0px;
 }
 
 .custom-select-body {
@@ -45,7 +45,7 @@
   display: none;
 }
 
-/* SHADOW */
+
 /*  shadow  */
 .shadow-wrapper {
   margin: 0px;
@@ -73,9 +73,12 @@
   right: 0px;
   top: 10em;
   z-index: 200;
-  padding: 40px;
-  --text-align: center;
+  padding: 20px;
   border-radius: 7px;
+}
+.shadow-alert {
+  text-align: center;
+  font-size: 18px;
 }
 .shadow-close {
   cursor: pointer;

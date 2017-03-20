@@ -4,8 +4,14 @@ default_select_settings = {
     "option_hover_background": "#e5e5e5"
 }
 default_shadow_settings = {
-    "max-width": "700px"
+    "max_width": "700px",
+    "type": "window"
 }
+function mergeSettings(default_settings, user_settings) {
+    default_clone = Object.assign({}, default_settings);
+    return Object.assign(default_clone,user_settings)
+}
+
 function selectArrowToggle(obj) {
     obj.each(function(){
         obj_i = $(this);
@@ -38,10 +44,10 @@ function toFilterCustomSelects(opt){
 
     }
 }
-$.fn.initCustomSelect = function(settings){
+$.fn.initCustomSelect = function(user_settings){
+    settings = mergeSettings(default_select_settings,user_settings)
     filter_attrs = ["data-filter", "data-filter-role", "data-filter-relation-id"];
     options_attrs = ["data-children", "data-parent"];
-    for (var k in settings) { default_select_settings[k] = settings[k] }
     this.each(function(i){
         iselect = $(this);
         init_val = iselect.children("option:selected").text();
@@ -50,7 +56,7 @@ $.fn.initCustomSelect = function(settings){
         head.find(".custom-select-head-value").text(init_val);
         head.addClass("valign-wrapper");
         head.find(".custom-select-head-value").addClass("valign");
-        head.find(".select-arrow").addClass("valign").css({"color": default_select_settings["arrow_color"]});
+        head.find(".select-arrow").addClass("valign").css({"color": settings["arrow_color"]});
         filter_attrs.forEach(function(i){
             wrapper.attr(i, iselect.attr(i));
         })
@@ -69,7 +75,7 @@ $.fn.initCustomSelect = function(settings){
             })
             body.append(option);
         });
-        body.find(".custom-select-option").mouseenter(function(){$(this).css({"background": default_select_settings["option_hover_background"], "color": default_select_settings["option_hover_color"]});})
+        body.find(".custom-select-option").mouseenter(function(){$(this).css({"background": settings["option_hover_background"], "color": settings["option_hover_color"]});})
         body.find(".custom-select-option").mouseleave(function(){$(this).css({"background": "white", color: "black"});})
         wrapper.append(head);
         wrapper.append(body);
@@ -121,33 +127,38 @@ $(document).on("click", ".custom-select-option", function(){
 //====================================================================
 /*     SHADOW        */
 $.fn.shadowFadeDestroy = function() {
-    this.fadeOut(500, function(){ this.remove()});
+    console.log(this)
+    this.fadeOut(1500, function(){ this.remove()});
 }
-
-function shadowAlert(str, destroy=true) {
-    $(".shadow-message-text").text(str);
-    $(".shadow-message").initShadow();
+function shadowClose() {
+    $(".shadow-wrapper").remove();
+}
+function shadowAlert(str, destroy) {
+    shadow_msg = $("<div class='shadow-alert'></div>");
+    shadow_msg.text(str);
+    shadow_msg.initShadow({"type": "alert"});
     if (destroy) setTimeout("$('.shadow-wrapper').shadowFadeDestroy()", 2000);
+    return false;
 }
 
-$.fn.initShadow = function(settings){
-    for (var k in settings) { default_shadow_settings[k] = settings[k] }
+$.fn.initShadow = function(user_settings){
+    settings = mergeSettings(default_shadow_settings,user_settings)
     wrapper = $('<div class="shadow-wrapper"></div>');
     shadow = $('<div class="shadow-shadow"></div>');
-    body = $('<div class="shadow-body"><i class="material-icons right shadow-close">close</i></div>');
-    body.css(default_shadow_settings);
-    //content = $(this).contents().clone();
+    close = $('<div class="right-align"><i class="material-icons shadow-close">close</i></div>');
+    body = $('<div class="shadow-body"></div>');
+    if (settings.type != "alert") body.append(close);
+    body.css({"max-width": settings.max_width});
     wrapper.append(shadow);
-    //body.append(content);
     body.append($(this));
     wrapper.append(body);
     $("body").prepend(wrapper);
 };
 $(document).on("click", ".shadow-close", function(){
-    $(this).closest(".shadow-wrapper").remove();
+    shadowClose();
 });
 $(document).on("click", ".shadow-shadow", function(){
-    $(this).closest(".shadow-wrapper").remove();
+    shadowClose();
 });
 /*     /SHADOW        */
 //====================================================================
