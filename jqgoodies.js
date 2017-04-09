@@ -7,6 +7,12 @@ default_shadow_settings = {
     "max_width": "700px",
     "type": "window"
 }
+default_calendar_settings = {
+    "time": false,
+    "onMonthUpdate": false,
+    "onCalendarInit": false,
+    "onDayClick": false
+}
 function mergeSettings(default_settings, user_settings) {
     default_clone = Object.assign({}, default_settings);
     return Object.assign(default_clone,user_settings)
@@ -41,7 +47,6 @@ function toFilterCustomSelects(opt){
             obj.find(".custom-select-option[data-parent='" + childrens + "']").removeClass("filtered");
             obj.find(".custom-select-option[data-parent='" + childrens + "']:last").css({"border": "none"});
         }
-
     }
 }
 $.fn.initCustomSelect = function(user_settings){
@@ -50,6 +55,7 @@ $.fn.initCustomSelect = function(user_settings){
     options_attrs = ["data-children", "data-parent"];
     this.each(function(i){
         iselect = $(this);
+        iselect.hide();
         init_val = iselect.children("option:selected").text();
         wrapper = $('<div class="custom-select-wrapper"></div>');
         head = $('<div class="custom-select-head"><span class="custom-select-head-value"></span><i class="material-icons select-arrow">arrow_drop_down</i></div>');
@@ -127,12 +133,15 @@ $(document).on("click", ".custom-select-option", function(){
 //====================================================================
 /*     SHADOW        */
 $.fn.shadowFadeDestroy = function() {
-    console.log(this)
     this.fadeOut(1500, function(){ this.remove()});
 }
 function shadowClose() {
     $(".shadow-wrapper").remove();
 }
+$(document).on("click", ".testok", function(){
+    $(this).closest(".shadow-alert").attr("data-answer", $(this).text())
+})
+
 function shadowAlert(str, destroy) {
     shadow_msg = $("<div class='shadow-alert'></div>");
     shadow_msg.text(str);
@@ -141,7 +150,7 @@ function shadowAlert(str, destroy) {
     return false;
 }
 
-$.fn.initShadow = function(user_settings){
+$.fn.initShadow = function(user_settings, callback){
     settings = mergeSettings(default_shadow_settings,user_settings)
     wrapper = $('<div class="shadow-wrapper"></div>');
     shadow = $('<div class="shadow-shadow"></div>');
@@ -153,6 +162,7 @@ $.fn.initShadow = function(user_settings){
     body.append($(this));
     wrapper.append(body);
     $("body").prepend(wrapper);
+    if (callback) callback()
 };
 $(document).on("click", ".shadow-close", function(){
     shadowClose();
@@ -161,4 +171,160 @@ $(document).on("click", ".shadow-shadow", function(){
     shadowClose();
 });
 /*     /SHADOW        */
+//====================================================================
+//====================================================================
+/*     CALENDAR        */
+var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+function getJQMonth(y,m) {
+    first_day = new Date(y,m, 1);
+    last_day = new Date(y,m+1, 0);
+    first_day_of_week = first_day.getDay() || 7;
+    last_day_of_week = last_day.getDay() || 7;
+    weeks = {}
+    m = parseInt(m)+1;
+    for (var i=0; i<6; i++) {
+        tmp = []
+        for (var j=1; j<8; j++) {
+            text = i*7+j-first_day_of_week+1;
+            if (i == 0 && j < first_day_of_week) text="";
+            if (i == 5 && j > last_day_of_week) text="";
+            if (text > last_day.getDate()) text="";
+            weeks[i + "-" + j] = text;
+        }
+    }
+    return weeks;
+}
+$.fn.nextMonth = function(delta) {
+    // delta -1 or +1
+    DateControl = this.closest(".custom-calendar-date-control");
+    cur_year = parseInt(DateControl.find(".custom-calendar-control-year").attr("data-cur-year"));
+    cur_month = parseInt(DateControl.find(".custom-calendar-control-month").attr("data-cur-month"));
+    next_year = cur_year;
+    next_month = cur_month + delta;
+    if (next_month == -1 || next_month == 12) next_year = cur_year + delta;
+    if (next_month == 12) next_month = 0;
+    if (next_month == -1) next_month = 11;
+    newdate = new Date(next_year, next_month, 1);
+    this.closest(".custom-calendar").updateCalendar(next_year, next_month);
+}
+$.fn.updateCalendar = function(y,m,d) {
+    this.find(".custom-calendar-day").removeClass("empty").removeClass("today").removeClass("green-back");
+    weeks = getJQMonth(y,m);
+    today = this.attr("data-today");
+    this.find(".custom-calendar-control-year").attr("data-cur-year", y).text(y);
+    this.find(".custom-calendar-control-month").attr("data-cur-month", m).text(monthNames[m]);
+    this.find(".custom-calendar-day").removeClass("empty");
+    this.find(".custom-calendar-day").each(function(){
+        coords = $(this).attr("coords");
+        v = weeks[coords]
+        $(this).text(v);
+        $(this).attr("data-day", [y,m+1,v].join("-"));
+        if (v=="") $(this).addClass("empty");
+    });
+    this.find(".custom-calendar-month").find(".custom-calendar-day[data-day='" + today + "']").addClass("today");
+    this.trigger("MonthUpdate");
+}
+$.fn.initCalendar = function(user_settings) {
+    settings = mergeSettings(default_calendar_settings,user_settings)
+    this.append($('<div class="custom-calendar"></div>'));
+    var Calendar = this.find(".custom-calendar");
+    today = new Date();
+    y = today.getFullYear();
+    m = today.getMonth();
+    d = today.getDate();
+    current_date = $('<div class="custom-calendar-current-date">\
+                        <div>Today:</div>\
+                        <div class="custom-calendar-current-day"></div>\
+                        <div class="custom-calendar-current-month"></div>\
+                        <div class="custom-calendar-current-year"></div>\
+                    </div>');
+    date_control = $('<div class="row custom-calendar-date-control">\
+                        <div class="custom-calendar-date-control-inner col s12 m6">\
+                            <i class="material-icons purple-icon custom-calendar-prev left" onclick="$(this).nextMonth(-1)">chevron_left</i>\
+                            <span class="custom-calendar-control-month"></span>\
+                            <span class="custom-calendar-control-year"></span>\
+                            <i class="material-icons purple-icon custom-calendar-next right" onclick="$(this).nextMonth(1)">chevron_right</i>\
+                        </div>\
+                    </div>');
+    time = $("<div class='custom-timepicker col s12 m6 right-align'></div>");
+    month_head = $('<div class="custom-calendar-week">\
+                        <div class="custom-calendar-day-head">Mon</div>\
+                        <div class="custom-calendar-day-head">Tue</div>\
+                        <div class="custom-calendar-day-head">Wed</div>\
+                        <div class="custom-calendar-day-head">Thu</div>\
+                        <div class="custom-calendar-day-head">Fri</div>\
+                        <div class="custom-calendar-day-head">Sat</div>\
+                        <div class="custom-calendar-day-head">Sun</div>\
+                    </div>');
+    current_month = $('<div class="custom-calendar-month"></div>');
+    for (var i=0; i<6; i++) {
+        week = $("<div class='custom-calendar-week'></div>");
+        for (var j=1; j<8; j++) {
+            day = $("<div class='custom-calendar-day'></div>");
+            day.attr("coords", i + "-" + j);
+            week.append(day);
+        }
+        current_month.append(week)
+    }
+
+    current_date.find(".custom-calendar-current-year").text(y);
+    current_date.find(".custom-calendar-current-month").text(monthNames[m]);
+    current_date.find(".custom-calendar-current-day").text(d);
+    if (settings['time']) {
+        time.initCustomTimepicker();
+        date_control.append(time);
+    }
+    Calendar.append(current_date);
+    Calendar.append(date_control);
+    Calendar.append(month_head);
+    Calendar.append(current_month);
+    Calendar.attr("data-today", y + "-" + (m+1) + "-" + d);
+    Calendar.updateCalendar(y,m);
+    Calendar.bind("MonthUpdate", settings.onMonthUpdate);
+    Calendar.bind("CalendarInit", settings.onCalendarInit);
+    Calendar.find(".custom-calendar-day").on("click", settings.onDayClick);
+    Calendar.trigger("CalendarInit");
+    Calendar.trigger("MonthUpdate");
+}
+/*     /CALENDAR        */
+//====================================================================
+
+//====================================================================
+/*     /TIMEPICKER        */
+function digitAutoComplete(s){
+    if (s.length == 1) return "0" + s;
+    else return s;
+}
+
+$.fn.initCustomTimepicker = function(){
+    ranges = [24,60,60];
+    names = ["hours", "minutes", "seconds"];
+    body = $('<div class="custom-timepicker-body"></div>');
+    hours = $('<div class="custom-timepicker-item custom-hours">');
+    minutes = $('<div class="custom-timepicker-item custom-minutes">');
+    seconds = $('<div class="custom-timepicker-item custom-seconds">');
+    [hours,minutes,seconds].forEach(function(item,i){
+        s = $("<select></select>");
+        s.attr("name", names[i]);
+        for(j=0;j<ranges[i];j++){
+            j_text = digitAutoComplete(j.toString());
+            o = $("<option></option");
+            o.text(j_text);
+            o.attr("value", j);
+            s.append(o);
+        }
+        item.append(s);
+    })
+    body.append(hours);
+    body.append(minutes);
+    body.append(seconds);
+    this.append(body);
+}
+$.fn.getCustomTimepickerValue = function(){
+    h = this.find(".custom-hours select").val();
+    m = this.find(".custom-minutes select").val();
+    s = this.find(".custom-seconds select").val();
+    return [digitAutoComplete(h),digitAutoComplete(m),digitAutoComplete(s)].join(":");
+}
+/*     /TIMEPICKER        */
 //====================================================================

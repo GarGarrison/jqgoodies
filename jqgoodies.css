@@ -68,7 +68,7 @@
   width: 90%;
   margin: 0px auto;
   background: white;
-  position: absolute;
+  position: fixed;
   left: 0px;
   right: 0px;
   top: 10em;
