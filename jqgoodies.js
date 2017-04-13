@@ -50,10 +50,12 @@ function toFilterCustomSelects(opt){
     }
 }
 $.fn.initCustomSelect = function(user_settings){
-    settings = mergeSettings(default_select_settings,user_settings)
+    var settings = mergeSettings(default_select_settings,user_settings);
     filter_attrs = ["data-filter", "data-filter-role", "data-filter-relation-id"];
     options_attrs = ["data-children", "data-parent"];
     this.each(function(i){
+        float = $(this).attr("data-float");
+        border = $(this).attr("data-border");
         iselect = $(this);
         iselect.hide();
         init_val = iselect.children("option:selected").text();
@@ -81,8 +83,12 @@ $.fn.initCustomSelect = function(user_settings){
             })
             body.append(option);
         });
-        body.find(".custom-select-option").mouseenter(function(){$(this).css({"background": settings["option_hover_background"], "color": settings["option_hover_color"]});})
+        body.find(".custom-select-option").mouseenter(function(){
+            $(this).css({"background": settings["option_hover_background"], "color": settings["option_hover_color"]
+        });})
         body.find(".custom-select-option").mouseleave(function(){$(this).css({"background": "white", color: "black"});})
+        if (border) head.css({"border": "none"});
+        wrapper.css({"float": float});
         wrapper.append(head);
         wrapper.append(body);
         iselect.after(wrapper);
@@ -151,7 +157,7 @@ function shadowAlert(str, destroy) {
 }
 
 $.fn.initShadow = function(user_settings, callback){
-    settings = mergeSettings(default_shadow_settings,user_settings)
+    var settings = mergeSettings(default_shadow_settings,user_settings)
     wrapper = $('<div class="shadow-wrapper"></div>');
     shadow = $('<div class="shadow-shadow"></div>');
     close = $('<div class="right-align"><i class="material-icons shadow-close">close</i></div>');
@@ -218,14 +224,14 @@ $.fn.updateCalendar = function(y,m,d) {
         coords = $(this).attr("coords");
         v = weeks[coords]
         $(this).text(v);
-        $(this).attr("data-day", [y,m+1,v].join("-"));
+        $(this).attr("data-day", [y, digitAutoComplete(m+1), digitAutoComplete(v)].join("-"));
         if (v=="") $(this).addClass("empty");
     });
     this.find(".custom-calendar-month").find(".custom-calendar-day[data-day='" + today + "']").addClass("today");
     this.trigger("MonthUpdate");
 }
 $.fn.initCalendar = function(user_settings) {
-    settings = mergeSettings(default_calendar_settings,user_settings)
+    var settings = mergeSettings(default_calendar_settings,user_settings);
     this.append($('<div class="custom-calendar"></div>'));
     var Calendar = this.find(".custom-calendar");
     today = new Date();
@@ -278,7 +284,7 @@ $.fn.initCalendar = function(user_settings) {
     Calendar.append(date_control);
     Calendar.append(month_head);
     Calendar.append(current_month);
-    Calendar.attr("data-today", y + "-" + (m+1) + "-" + d);
+    Calendar.attr("data-today", y + "-" + digitAutoComplete(m+1) + "-" + digitAutoComplete(d));
     Calendar.updateCalendar(y,m);
     Calendar.bind("MonthUpdate", settings.onMonthUpdate);
     Calendar.bind("CalendarInit", settings.onCalendarInit);
@@ -292,6 +298,7 @@ $.fn.initCalendar = function(user_settings) {
 //====================================================================
 /*     /TIMEPICKER        */
 function digitAutoComplete(s){
+    s = s.toString();
     if (s.length == 1) return "0" + s;
     else return s;
 }
