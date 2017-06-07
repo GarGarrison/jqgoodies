@@ -1,7 +1,8 @@
 default_select_settings = {
     "arrow_color": "black",
     "option_hover_color": "black", 
-    "option_hover_background": "#e5e5e5"
+    "option_hover_background": "#e5e5e5",
+    "need_legend": true
 }
 default_shadow_settings = {
     "max_width": "700px",
@@ -14,32 +15,30 @@ default_calendar_settings = {
     "onDayClick": false
 }
 function mergeSettings(default_settings, user_settings) {
-    default_clone = Object.assign({}, default_settings);
+    var default_clone = Object.assign({}, default_settings);
     return Object.assign(default_clone,user_settings)
 }
 
 function selectArrowToggle(obj) {
     obj.each(function(){
-        obj_i = $(this);
-        text = obj_i.text();
-        newtext = "arrow_drop_up";
-        if (text == "arrow_drop_up") newtext = "arrow_drop_down";
-        obj_i.text(newtext);
+        var newtext = "arrow_drop_up";
+        if ($(this).text() == "arrow_drop_up") newtext = "arrow_drop_down";
+        $(this).text(newtext);
     })
 }
 function hideVisibleCustomSelect() {
-    body = $(".custom-select-body:visible");
-    head = body.prev(".custom-select-head");
+    var body = $(".custom-select-body:visible");
+    var head = body.prev(".custom-select-head");
     selectArrowToggle(head.find("i"));
     body.slideUp('fast');
 }
 function toFilterCustomSelects(opt){
-    wrapper = opt.closest(".custom-select-wrapper");
-    filter_relation = wrapper.attr("data-filter-relation-id");
-    role = wrapper.attr("data-filter-role");
+    var wrapper = opt.closest(".custom-select-wrapper");
+    var filter_relation = wrapper.attr("data-filter-relation-id");
+    var role = wrapper.attr("data-filter-role");
     if (role == "donor") {
-        obj = $(".custom-select-wrapper[data-filter-relation-id='" + filter_relation + "'][data-filter-role='object']");
-        childrens = opt.attr("data-children");
+        var obj = $(".custom-select-wrapper[data-filter-relation-id='" + filter_relation + "'][data-filter-role='object']");
+        var childrens = opt.attr("data-children");
         if (!childrens) obj.find(".custom-select-option").removeClass("filtered");
         else {
             obj.find(".custom-select-option").addClass("filtered");
@@ -51,15 +50,16 @@ function toFilterCustomSelects(opt){
 }
 $.fn.initCustomSelect = function(user_settings){
     var settings = mergeSettings(default_select_settings,user_settings);
-    filter_attrs = ["data-filter", "data-filter-role", "data-filter-relation-id"];
-    options_attrs = ["data-children", "data-parent"];
+    var filter_attrs = ["data-filter", "data-filter-role", "data-filter-relation-id"];
+    var options_attrs = ["data-children", "data-parent"];
     this.each(function(i){
-        float = $(this).attr("data-float");
-        border = $(this).attr("data-border");
-        iselect = $(this);
+        var iselect = $(this);
+        if (iselect.attr("data-init") == "1") return true;
+        var float = $(this).attr("data-float");
+        var border = $(this).attr("data-border");
         iselect.hide();
-        init_val = iselect.children("option:selected").text();
-        wrapper = $('<div class="custom-select-wrapper"></div>');
+        var init_val = iselect.children("option:selected").text();
+        var wrapper = $('<div class="custom-select-wrapper"></div>');
         head = $('<div class="custom-select-head"><span class="custom-select-head-value"></span><i class="material-icons select-arrow">arrow_drop_down</i></div>');
         head.find(".custom-select-head-value").text(init_val);
         head.addClass("valign-wrapper");
@@ -68,14 +68,14 @@ $.fn.initCustomSelect = function(user_settings){
         filter_attrs.forEach(function(i){
             wrapper.attr(i, iselect.attr(i));
         })
-        body = $('<div class="custom-select-body"></div>');
+        var body = $('<div class="custom-select-body"></div>');
 
         iselect.children("option").each(function(i){
-            ioption = $(this);
-            option = $('<div class="custom-select-option"></div>');
-            if (i == 0) option.addClass("custom-select-legend");
-            t = ioption.text();
-            v = ioption.val();
+            var ioption = $(this);
+            var option = $('<div class="custom-select-option"></div>');
+            if (i == 0 && settings["need_legend"]) option.addClass("custom-select-legend");
+            var t = ioption.text();
+            var v = ioption.val();
             option.attr("data-value", v);
             option.text(t);
             options_attrs.forEach(function(i){
@@ -92,25 +92,32 @@ $.fn.initCustomSelect = function(user_settings){
         wrapper.append(head);
         wrapper.append(body);
         iselect.after(wrapper);
+        iselect.attr("data-init", "1");
     });
     $(".custom-select-head-value").each(function(){
-        t = $(this).text();
-        opt = $(".custom-select-option").filter(function() { return $(this).text() === t});
+        var t = $(this).text();
+        var opt = $(".custom-select-option").filter(function() { return $(this).text() === t});
         toFilterCustomSelects(opt);
     })
+}
+$.fn.destroyCustomSelect = function() {
+    this.next(".custom-select-wrapper").remove();
+    this.attr("data-init", "0")
 }
 $.fn.chooseCustomSelectOption = function(arrow_toggle=true){
     /* filter part */
     toFilterCustomSelects(this);
     /* /filter part */
-    v = this.attr("data-value");
-    t = this.text();
-    this.closest(".custom-select-wrapper").prev("select.custom-select").val(v);
-    par = this.closest(".custom-select-body");
-    head = par.prev(".custom-select-head");
+    var v = this.attr("data-value");
+    var t = this.text();
+    var parent_select = this.closest(".custom-select-wrapper").prev("select")
+    parent_select.val(v);
+    parent_select.trigger("change")
+    var body = this.closest(".custom-select-body");
+    var head = body.prev(".custom-select-head");
     head.find(".custom-select-head-value").text(t);
     if (arrow_toggle) selectArrowToggle(head.find("i"));
-    par.slideUp("fast");
+    body.slideUp("fast");
 }
 $(document).on('click', 'html', function(event){
     if (!$(event.target).closest(".custom-select-wrapper").length) {

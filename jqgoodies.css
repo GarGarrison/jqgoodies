@@ -1,6 +1,7 @@
 /* select style */
 .custom-select-wrapper {
   --margin: 10px 0px;
+  margin-bottom: 20px;
 }
 
 .custom-select-body {
