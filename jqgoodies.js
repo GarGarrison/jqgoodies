@@ -164,7 +164,7 @@ function shadowAlert(str, destroy) {
 }
 
 $.fn.initShadow = function(user_settings, callback){
-    var settings = mergeSettings(default_shadow_settings,user_settings)
+    var settings = mergeSettings(default_shadow_settings,user_settings);
     wrapper = $('<div class="shadow-wrapper"></div>');
     shadow = $('<div class="shadow-shadow"></div>');
     close = $('<div class="right-align"><i class="material-icons shadow-close">close</i></div>');
@@ -172,7 +172,7 @@ $.fn.initShadow = function(user_settings, callback){
     if (settings.type != "alert") body.append(close);
     body.css({"max-width": settings.max_width});
     wrapper.append(shadow);
-    body.append($(this));
+    body.append($(this).clone().show());
     wrapper.append(body);
     $("body").prepend(wrapper);
     if (callback) callback()
