@@ -48,6 +48,13 @@ function toFilterCustomSelects(opt){
         }
     }
 }
+
+$(document).on("change", "select[data-init=1]", function(){
+    t = $(this).find("option:selected").text();
+    v = $(this).val()
+    $(this).next(".custom-select-wrapper").chooseCustomSelectOptionWithValue(v, t);
+})
+
 $.fn.initCustomSelect = function(user_settings){
     var settings = mergeSettings(default_select_settings,user_settings);
     var filter_attrs = ["data-filter", "data-filter-role", "data-filter-relation-id"];
@@ -58,7 +65,7 @@ $.fn.initCustomSelect = function(user_settings){
         var float = $(this).attr("data-float");
         var border = $(this).attr("data-border");
         iselect.hide();
-        var init_val = iselect.children("option:selected").text();
+        var init_val = iselect.children("option[selected='selected']").text() || iselect.children("option:selected").text();
         var wrapper = $('<div class="custom-select-wrapper"></div>');
         head = $('<div class="custom-select-head"><span class="custom-select-head-value"></span><i class="material-icons select-arrow">arrow_drop_down</i></div>');
         head.find(".custom-select-head-value").text(init_val);
@@ -93,6 +100,7 @@ $.fn.initCustomSelect = function(user_settings){
         wrapper.append(body);
         iselect.after(wrapper);
         iselect.attr("data-init", "1");
+
     });
     $(".custom-select-head-value").each(function(){
         var t = $(this).text();
@@ -104,15 +112,28 @@ $.fn.destroyCustomSelect = function() {
     this.next(".custom-select-wrapper").remove();
     this.attr("data-init", "0")
 }
+$.fn.chooseCustomSelectOptionWithValue = function(v, t) {
+    var parent_select = this.closest(".custom-select-wrapper").prev("select");
+    var check_option = false;
+    parent_select.find("option").each(function(i){
+        if ($(this).val() == v) check_option = true;
+    });
+    if (check_option){
+        this.find(".custom-select-head-value").text(t);
+    }
+}
 $.fn.chooseCustomSelectOption = function(arrow_toggle=true){
     /* filter part */
     toFilterCustomSelects(this);
     /* /filter part */
+    var parent_select = this.closest(".custom-select-wrapper").prev("select");
+    var old_v = parent_select.val();
     var v = this.attr("data-value");
     var t = this.text();
-    var parent_select = this.closest(".custom-select-wrapper").prev("select")
-    parent_select.val(v);
-    parent_select.trigger("change")
+    if (old_v != v) {
+        parent_select.val(v);
+        parent_select.trigger("change");
+    }
     var body = this.closest(".custom-select-body");
     var head = body.prev(".custom-select-head");
     head.find(".custom-select-head-value").text(t);
@@ -140,7 +161,7 @@ $(document).on("click", ".custom-select-head", function(){
 });
 $(document).on("click", ".custom-select-option", function(){
     $(this).chooseCustomSelectOption();
-    vision();
+    //vision();
 });
 
 //====================================================================
