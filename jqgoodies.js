@@ -259,6 +259,7 @@ $.fn.updateCalendar = function(y,m,d) {
     this.trigger("MonthUpdate");
 }
 $.fn.initCalendar = function(user_settings) {
+    var disabled = this.attr("data-disabled");
     var settings = mergeSettings(default_calendar_settings,user_settings);
     this.append($('<div class="custom-calendar"></div>'));
     var Calendar = this.find(".custom-calendar");
@@ -316,7 +317,8 @@ $.fn.initCalendar = function(user_settings) {
     Calendar.updateCalendar(y,m);
     Calendar.bind("MonthUpdate", settings.onMonthUpdate);
     Calendar.bind("CalendarInit", settings.onCalendarInit);
-    Calendar.find(".custom-calendar-day").on("click", settings.onDayClick);
+    console.log(disabled)
+    if (!disabled) Calendar.find(".custom-calendar-day").on("click", settings.onDayClick);
     Calendar.trigger("CalendarInit");
     Calendar.trigger("MonthUpdate");
 }
